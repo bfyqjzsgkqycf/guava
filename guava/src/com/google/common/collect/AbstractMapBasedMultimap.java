@@ -89,7 +89,6 @@ import org.jspecify.annotations.Nullable;
  * @author Louis Wasserman
  */
 @GwtCompatible
-@SuppressWarnings("WrongCommentType") // false positive
 abstract class AbstractMapBasedMultimap<K extends @Nullable Object, V extends @Nullable Object>
     extends AbstractMultimap<K, V> implements Serializable {
   /*
