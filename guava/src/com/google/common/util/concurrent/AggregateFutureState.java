@@ -54,7 +54,10 @@ abstract class AggregateFutureState<OutputT extends @Nullable Object>
     AtomicHelper helper;
     Throwable thrownReflectionFailure = null;
     try {
-      helper = new SafeAtomicHelper();
+      helper =
+              new SafeAtomicHelper(
+                      newUpdater(AggregateFutureState.class, Set.class, "seenExceptions"),
+                      newUpdater(AggregateFutureState.class, "remaining"));
     } catch (Throwable reflectionFailure) { // sneaky checked exception
       // Some Android 5.0.x Samsung devices have bugs in JDK reflection APIs that cause
       // getDeclaredField to throw a NoSuchFieldException when the field is definitely there.
@@ -153,12 +156,20 @@ abstract class AggregateFutureState<OutputT extends @Nullable Object>
   }
 
   private static final class SafeAtomicHelper extends AtomicHelper {
-    private static final AtomicReferenceFieldUpdater<
+    final AtomicReferenceFieldUpdater<
             ? super AggregateFutureState<?>, ? super @Nullable Set<Throwable>>
-        seenExceptionsUpdater = seenExceptionsUpdaterFromWithinAggregateFutureState();
+            seenExceptionsUpdater;
 
-    private static final AtomicIntegerFieldUpdater<? super AggregateFutureState<?>>
-        remainingCountUpdater = remainingCountUpdaterFromWithinAggregateFutureState();
+    final AtomicIntegerFieldUpdater<? super AggregateFutureState<?>> remainingCountUpdater;
+
+    SafeAtomicHelper(
+            AtomicReferenceFieldUpdater<
+                    ? super AggregateFutureState<?>, ? super @Nullable Set<Throwable>>
+                    seenExceptionsUpdater,
+            AtomicIntegerFieldUpdater<? super AggregateFutureState<?>> remainingCountUpdater) {
+      this.seenExceptionsUpdater = seenExceptionsUpdater;
+      this.remainingCountUpdater = remainingCountUpdater;
+    }
 
     @Override
     void compareAndSetSeenExceptions(
@@ -191,26 +202,4 @@ abstract class AggregateFutureState<OutputT extends @Nullable Object>
     }
   }
 
-  /**
-   * Returns an {@link AtomicReferenceFieldUpdater} for {@link #seenExceptions}.
-   *
-   * <p>The creation of the updater has to happen directly inside {@link AggregateFutureState}, as
-   * discussed in {@link AbstractFuture#methodHandlesLookupFromWithinAbstractFuture}.
-   */
-  private static AtomicReferenceFieldUpdater<
-          ? super AggregateFutureState<?>, ? super @Nullable Set<Throwable>>
-      seenExceptionsUpdaterFromWithinAggregateFutureState() {
-    return newUpdater(AggregateFutureState.class, Set.class, "seenExceptions");
-  }
-
-  /**
-   * Returns an {@link AtomicIntegerFieldUpdater} for {@link #remaining}.
-   *
-   * <p>The creation of the updater has to happen directly inside {@link AggregateFutureState}, as
-   * discussed in {@link AbstractFuture#methodHandlesLookupFromWithinAbstractFuture}.
-   */
-  private static AtomicIntegerFieldUpdater<? super AggregateFutureState<?>>
-      remainingCountUpdaterFromWithinAggregateFutureState() {
-    return newUpdater(AggregateFutureState.class, "remaining");
-  }
 }
