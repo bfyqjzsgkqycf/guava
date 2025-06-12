@@ -19,7 +19,6 @@ package com.google.common.collect;
 import com.google.common.annotations.GwtCompatible;
 import java.util.Collection;
 import java.util.Map;
-import org.jspecify.annotations.Nullable;
 
 /**
  * A dummy superclass to support GWT serialization of the element types of an {@link
@@ -31,8 +30,7 @@ import org.jspecify.annotations.Nullable;
  * <p>TODO(cpovirk): Consider applying this subclass approach to our other types.
  */
 @GwtCompatible(emulated = true)
-abstract class ArrayListMultimapGwtSerializationDependencies<
-        K extends @Nullable Object, V extends @Nullable Object>
+abstract class ArrayListMultimapGwtSerializationDependencies<K, V>
     extends AbstractListMultimap<K, V> {
   ArrayListMultimapGwtSerializationDependencies(Map<K, Collection<V>> map) {
     super(map);
