@@ -98,9 +98,16 @@ public abstract class ByteSink {
   public void write(byte[] bytes) throws IOException {
     checkNotNull(bytes);
 
-    try (OutputStream out = openStream()) {
-      out.write(bytes);
-    }
+    Closer closer = Closer.create();
+    try {
+      OutputStream out = closer.register(openStream());
+        out.write(bytes);
+        out.flush(); // https://github.com/google/guava/issues/1330
+      } catch (Throwable e) {
+        throw closer.rethrow(e);
+      } finally {
+        closer.close();
+      }
   }
 
   /**
@@ -114,7 +121,16 @@ public abstract class ByteSink {
   public long writeFrom(InputStream input) throws IOException {
     checkNotNull(input);
 
-    try (OutputStream out = openStream()) {
+    Closer closer = Closer.create();
+    try {
+      OutputStream out = closer.register(openStream());
+      long written = ByteStreams.copy(input, out);Add commentMore actions
+      out.flush(); // https://github.com/google/guava/issues/1330
+      return written;
+    } catch (Throwable e) {
+      throw closer.rethrow(e);
+    } finally {
+      closer.close();
       return ByteStreams.copy(input, out);
     }
   }
